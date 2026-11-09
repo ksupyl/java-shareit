@@ -27,7 +27,7 @@ public final class UserMapper {
     }
 
     /**
-     * Переносит в пользователя только присланные поля: null значит «не менять», так работает PATCH.
+     * Переносит в пользователя только присланные поля: null значит "не менять", так работает PATCH.
      */
     public static void updateUserFields(User user, UserDto userDto) {
         if (userDto.getName() != null) {
