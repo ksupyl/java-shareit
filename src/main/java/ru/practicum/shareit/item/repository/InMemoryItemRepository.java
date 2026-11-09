@@ -51,4 +51,12 @@ public class InMemoryItemRepository implements ItemRepository {
                         || item.getDescription().toLowerCase().contains(query))
                 .toList();
     }
+
+    @Override
+    public void deleteAllByOwnerId(Long ownerId) {
+        Set<Long> itemIds = itemIdsByOwnerId.remove(ownerId);
+        if (itemIds != null) {
+            itemIds.forEach(items::remove);
+        }
+    }
 }

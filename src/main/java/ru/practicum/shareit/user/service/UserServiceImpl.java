@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
@@ -18,6 +19,7 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final ItemRepository itemRepository;
 
     @Override
     public UserDto create(UserDto userDto) {
@@ -56,8 +58,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public void delete(Long userId) {
         User user = getUserOrThrow(userId);
+        itemRepository.deleteAllByOwnerId(user.getId());
         userRepository.deleteById(user.getId());
-        log.info("Deleted user id={}", userId);
+        log.info("Deleted user id={} and their items", userId);
     }
 
     private User getUserOrThrow(Long userId) {

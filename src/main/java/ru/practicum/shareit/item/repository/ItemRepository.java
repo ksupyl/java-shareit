@@ -17,4 +17,6 @@ public interface ItemRepository {
      * Доступные вещи, в названии или описании которых есть этот текст, без учёта регистра.
      */
     List<Item> searchAvailable(String text);
+
+    void deleteAllByOwnerId(Long ownerId);
 }
