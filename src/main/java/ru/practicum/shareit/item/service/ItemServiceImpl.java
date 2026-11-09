@@ -56,6 +56,17 @@ public class ItemServiceImpl implements ItemService {
                 .toList();
     }
 
+    @Override
+    public List<ItemDto> search(String text) {
+        // пустой запрос совпал бы с каждой вещью, поэтому сразу отдаём пустой список
+        if (text == null || text.isBlank()) {
+            return List.of();
+        }
+        return itemRepository.searchAvailable(text).stream()
+                .map(ItemMapper::toItemDto)
+                .toList();
+    }
+
     private User getUserOrThrow(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id=" + userId + " not found"));

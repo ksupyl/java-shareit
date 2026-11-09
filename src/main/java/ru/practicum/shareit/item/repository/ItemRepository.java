@@ -12,4 +12,9 @@ public interface ItemRepository {
     Optional<Item> findById(Long id);
 
     List<Item> findAllByOwnerId(Long ownerId);
+
+    /**
+     * Доступные вещи, в названии или описании которых есть этот текст, без учёта регистра.
+     */
+    List<Item> searchAvailable(String text);
 }
