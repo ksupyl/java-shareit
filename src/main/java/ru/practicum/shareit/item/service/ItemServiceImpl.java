@@ -11,10 +11,15 @@ import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.exception.ValidationException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
+import ru.practicum.shareit.item.mapper.CommentMapper;
 import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -34,6 +39,7 @@ public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
+    private final CommentRepository commentRepository;
 
     @Override
     @Transactional
@@ -82,6 +88,23 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.searchAvailable(text).stream()
                 .map(ItemMapper::toItemDto)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public CommentDto addComment(Long userId, Long itemId, CommentDto commentDto) {
+        User author = getUserOrThrow(userId);
+        Item item = getItemOrThrow(itemId);
+        LocalDateTime now = LocalDateTime.now();
+        // отзыв принимаем только от того, кто брал вещь, и только когда аренда уже закончилась
+        boolean hasFinishedBooking = bookingRepository.existsByItem_IdAndBooker_IdAndStatusAndEndIsBefore(
+                itemId, userId, BookingStatus.APPROVED, now);
+        if (!hasFinishedBooking) {
+            throw new ValidationException("User id=" + userId + " has no finished booking of item id=" + itemId);
+        }
+        Comment comment = commentRepository.save(CommentMapper.toComment(commentDto, item, author, now));
+        log.info("Added comment id={} to item id={} by user id={}", comment.getId(), itemId, userId);
+        return CommentMapper.toCommentDto(comment);
     }
 
     /**

@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.common.ShareItHeaders;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.service.ItemService;
@@ -65,5 +67,14 @@ public class ItemController {
     public List<ItemDto> search(@RequestParam String text) {
         log.info("GET /items/search, text={}", text);
         return itemService.search(text);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommentDto addComment(@RequestHeader(ShareItHeaders.USER_ID) Long userId,
+                                 @PathVariable Long itemId,
+                                 @RequestBody @Valid CommentDto commentDto) {
+        log.info("POST /items/{}/comment, user id={}", itemId, userId);
+        return itemService.addComment(userId, itemId, commentDto);
     }
 }

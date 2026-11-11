@@ -58,4 +58,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     // брони сразу нескольких вещей — для дат в карточках. Здесь нужны только id и даты, поэтому без графа
     List<Booking> findByItem_IdInAndStatus(Collection<Long> itemIds, BookingStatus status);
+
+    // брал ли пользователь вещь и закончилась ли аренда — без этого отзыв не принимаем
+    boolean existsByItem_IdAndBooker_IdAndStatusAndEndIsBefore(Long itemId, Long bookerId, BookingStatus status,
+                                                               LocalDateTime end);
 }
