@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -17,12 +18,14 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public ItemDto create(Long ownerId, ItemDto itemDto) {
         User owner = getUserOrThrow(ownerId);
         Item item = itemRepository.save(ItemMapper.toItem(itemDto, owner));
@@ -31,6 +34,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public ItemDto update(Long userId, Long itemId, ItemDto itemDto) {
         User user = getUserOrThrow(userId);
         Item item = getItemOrThrow(itemId);
@@ -51,7 +55,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemDto> getAllByOwner(Long ownerId) {
         User owner = getUserOrThrow(ownerId);
-        return itemRepository.findAllByOwnerId(owner.getId()).stream()
+        return itemRepository.findByOwner_IdOrderById(owner.getId()).stream()
                 .map(ItemMapper::toItemDto)
                 .toList();
     }
