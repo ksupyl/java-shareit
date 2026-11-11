@@ -4,16 +4,26 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.booking.dto.BookingShortDto;
+import ru.practicum.shareit.booking.mapper.BookingMapper;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,6 +33,7 @@ public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
 
     @Override
     @Transactional
@@ -48,16 +59,18 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto getById(Long itemId) {
-        return ItemMapper.toItemDto(getItemOrThrow(itemId));
+    public ItemWithBookingsDto getById(Long userId, Long itemId) {
+        Item item = getItemOrThrow(itemId);
+        // userId == null — запрос без заголовка, такой пользователь точно не владелец
+        boolean isOwner = item.getOwner().getId().equals(userId);
+        return toItemsWithBookings(List.of(item), isOwner).get(0);
     }
 
     @Override
-    public List<ItemDto> getAllByOwner(Long ownerId) {
+    public List<ItemWithBookingsDto> getAllByOwner(Long ownerId) {
         User owner = getUserOrThrow(ownerId);
-        return itemRepository.findByOwner_IdOrderById(owner.getId()).stream()
-                .map(ItemMapper::toItemDto)
-                .toList();
+        List<Item> items = itemRepository.findByOwner_IdOrderById(owner.getId());
+        return toItemsWithBookings(items, true);
     }
 
     @Override
@@ -69,6 +82,52 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.searchAvailable(text).stream()
                 .map(ItemMapper::toItemDto)
                 .toList();
+    }
+
+    /**
+     * Данные для карточек берём сразу для всех вещей, одним запросом на таблицу, а не запросом на каждую вещь:
+     * иначе на список из N вещей ушёл бы N + 1 запрос.
+     */
+    private List<ItemWithBookingsDto> toItemsWithBookings(List<Item> items, boolean withBookings) {
+        if (items.isEmpty()) {
+            return List.of();
+        }
+        List<Long> itemIds = items.stream()
+                .map(Item::getId)
+                .toList();
+        Map<Long, List<Booking>> bookingsByItemId = withBookings ? findApprovedBookings(itemIds) : Map.of();
+        LocalDateTime now = LocalDateTime.now();
+        return items.stream()
+                .map(item -> {
+                    List<Booking> bookings = bookingsByItemId.getOrDefault(item.getId(), List.of());
+                    return ItemMapper.toItemWithBookingsDto(item,
+                            findLastBooking(bookings, now), findNextBooking(bookings, now));
+                })
+                .toList();
+    }
+
+    // в карточке показываем только подтверждённые брони: ожидающие и отклонённые ещё ничего не значат
+    private Map<Long, List<Booking>> findApprovedBookings(List<Long> itemIds) {
+        return bookingRepository.findByItem_IdInAndStatus(itemIds, BookingStatus.APPROVED).stream()
+                .collect(Collectors.groupingBy(booking -> booking.getItem().getId()));
+    }
+
+    // последняя — та, что началась позже всех среди уже начавшихся
+    private static BookingShortDto findLastBooking(List<Booking> bookings, LocalDateTime now) {
+        return bookings.stream()
+                .filter(booking -> !booking.getStart().isAfter(now))
+                .max(Comparator.comparing(Booking::getStart))
+                .map(BookingMapper::toBookingShortDto)
+                .orElse(null);
+    }
+
+    // следующая — та, что начнётся раньше всех среди ещё не начавшихся
+    private static BookingShortDto findNextBooking(List<Booking> bookings, LocalDateTime now) {
+        return bookings.stream()
+                .filter(booking -> booking.getStart().isAfter(now))
+                .min(Comparator.comparing(Booking::getStart))
+                .map(BookingMapper::toBookingShortDto)
+                .orElse(null);
     }
 
     private User getUserOrThrow(Long userId) {

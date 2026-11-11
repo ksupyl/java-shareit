@@ -7,6 +7,7 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,4 +55,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @EntityGraph(attributePaths = {"item", "booker"})
     List<Booking> findByItem_Owner_IdAndStatus(Long ownerId, BookingStatus status, Sort sort);
+
+    // брони сразу нескольких вещей — для дат в карточках. Здесь нужны только id и даты, поэтому без графа
+    List<Booking> findByItem_IdInAndStatus(Collection<Long> itemIds, BookingStatus status);
 }

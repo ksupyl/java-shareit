@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.common.ShareItHeaders;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.validation.OnCreate;
 import ru.practicum.shareit.validation.OnUpdate;
@@ -46,14 +47,16 @@ public class ItemController {
         return itemService.update(userId, itemId, itemDto);
     }
 
+    // Заголовок необязательный: вещь может посмотреть кто угодно, а брони в ней увидит только владелец
     @GetMapping("/{itemId}")
-    public ItemDto getById(@PathVariable Long itemId) {
-        log.info("GET /items/{}", itemId);
-        return itemService.getById(itemId);
+    public ItemWithBookingsDto getById(@RequestHeader(value = ShareItHeaders.USER_ID, required = false) Long userId,
+                                       @PathVariable Long itemId) {
+        log.info("GET /items/{}, user id={}", itemId, userId);
+        return itemService.getById(userId, itemId);
     }
 
     @GetMapping
-    public List<ItemDto> getAllByOwner(@RequestHeader(ShareItHeaders.USER_ID) Long userId) {
+    public List<ItemWithBookingsDto> getAllByOwner(@RequestHeader(ShareItHeaders.USER_ID) Long userId) {
         log.info("GET /items, user id={}", userId);
         return itemService.getAllByOwner(userId);
     }
