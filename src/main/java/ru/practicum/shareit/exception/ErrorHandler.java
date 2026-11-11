@@ -34,7 +34,6 @@ public class ErrorHandler {
     @ExceptionHandler({
             MissingRequestHeaderException.class,
             MissingServletRequestParameterException.class,
-            MethodArgumentTypeMismatchException.class,
             HttpMessageNotReadableException.class,
             ValidationException.class
     })
@@ -42,6 +41,16 @@ public class ErrorHandler {
     public ErrorResponse handleBadRequest(Exception e) {
         log.warn("400 Bad Request: {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
+    }
+
+    // Параметр не того типа: /items/abc или ?state=SOON. Текст Spring тут с именами Java-классов,
+    // поэтому отвечаем своим.
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        String message = "Invalid value '" + e.getValue() + "' for parameter '" + e.getName() + "'";
+        log.warn("400 Bad Request: {}", message);
+        return new ErrorResponse(message);
     }
 
     @ExceptionHandler(ForbiddenException.class)
