@@ -119,12 +119,14 @@ public class ItemServiceImpl implements ItemService {
                 .map(Item::getId)
                 .toList();
         Map<Long, List<Booking>> bookingsByItemId = withBookings ? findApprovedBookings(itemIds) : Map.of();
+        Map<Long, List<CommentDto>> commentsByItemId = findComments(itemIds);
         LocalDateTime now = LocalDateTime.now();
         return items.stream()
                 .map(item -> {
                     List<Booking> bookings = bookingsByItemId.getOrDefault(item.getId(), List.of());
                     return ItemMapper.toItemWithBookingsDto(item,
-                            findLastBooking(bookings, now), findNextBooking(bookings, now));
+                            findLastBooking(bookings, now), findNextBooking(bookings, now),
+                            commentsByItemId.getOrDefault(item.getId(), List.of()));
                 })
                 .toList();
     }
@@ -133,6 +135,12 @@ public class ItemServiceImpl implements ItemService {
     private Map<Long, List<Booking>> findApprovedBookings(List<Long> itemIds) {
         return bookingRepository.findByItem_IdInAndStatus(itemIds, BookingStatus.APPROVED).stream()
                 .collect(Collectors.groupingBy(booking -> booking.getItem().getId()));
+    }
+
+    private Map<Long, List<CommentDto>> findComments(List<Long> itemIds) {
+        return commentRepository.findByItem_IdInOrderByCreated(itemIds).stream()
+                .collect(Collectors.groupingBy(comment -> comment.getItem().getId(),
+                        Collectors.mapping(CommentMapper::toCommentDto, Collectors.toList())));
     }
 
     // последняя — та, что началась позже всех среди уже начавшихся

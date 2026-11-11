@@ -6,8 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.shareit.booking.dto.BookingShortDto;
 
+import java.util.List;
+
 /**
- * Вещь при просмотре: к её полям добавлены последняя и ближайшая брони.
+ * Вещь при просмотре: к её полям добавлены последняя и ближайшая брони и отзывы.
  * Брони видит только владелец, у остальных эти поля null.
  */
 @Data
@@ -23,4 +25,5 @@ public class ItemWithBookingsDto {
     private Long requestId;
     private BookingShortDto lastBooking;
     private BookingShortDto nextBooking;
+    private List<CommentDto> comments;
 }
