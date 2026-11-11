@@ -34,7 +34,6 @@ public class ErrorHandler {
     @ExceptionHandler({
             MissingRequestHeaderException.class,
             MissingServletRequestParameterException.class,
-            HttpMessageNotReadableException.class,
             ValidationException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -51,6 +50,15 @@ public class ErrorHandler {
         String message = "Invalid value '" + e.getValue() + "' for parameter '" + e.getName() + "'";
         log.warn("400 Bad Request: {}", message);
         return new ErrorResponse(message);
+    }
+
+    // Тело запроса не прочитать: его нет, JSON битый или в поле не тот тип, например дата "tomorrow".
+    // Текст Spring и Jackson тут с именами Java-классов и методов, поэтому он только в лог.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleNotReadable(HttpMessageNotReadableException e) {
+        log.warn("400 Bad Request: {}", e.getMessage());
+        return new ErrorResponse("Request body is missing or malformed");
     }
 
     @ExceptionHandler(ForbiddenException.class)
