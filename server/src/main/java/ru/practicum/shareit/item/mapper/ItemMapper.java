@@ -8,6 +8,7 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemShortDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
@@ -49,14 +50,15 @@ public final class ItemMapper {
 
     /**
      * Новая вещь с указанным владельцем. id не копируем — его выдаст хранилище.
-     * requestId здесь не разбираем: для привязки к запросу нужен сам запрос, а его у маппера нет.
+     * request — запрос, в ответ на который добавили вещь, или null. Найти его по requestId — дело сервиса.
      */
-    public static Item toItem(ItemDto itemDto, User owner) {
+    public static Item toItem(ItemDto itemDto, User owner, ItemRequest request) {
         return Item.builder()
                 .name(itemDto.getName())
                 .description(itemDto.getDescription())
                 .available(itemDto.getAvailable())
                 .owner(owner)
+                .request(request)
                 .build();
     }
 
