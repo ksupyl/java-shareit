@@ -4,11 +4,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import ru.practicum.shareit.item.model.Item;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
     List<Item> findByOwner_IdOrderById(Long ownerId);
+
+    // вещи, которые добавили в ответ на эти запросы, — сразу для нескольких запросов
+    List<Item> findByRequest_IdInOrderById(Collection<Long> requestIds);
 
     /**
      * Доступные вещи, в названии или описании которых есть этот текст, без учёта регистра.
