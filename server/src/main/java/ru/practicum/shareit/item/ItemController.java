@@ -1,10 +1,8 @@
 package ru.practicum.shareit.item;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,8 +18,6 @@ import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.service.ItemService;
-import ru.practicum.shareit.validation.OnCreate;
-import ru.practicum.shareit.validation.OnUpdate;
 
 import java.util.List;
 
@@ -35,8 +31,7 @@ public class ItemController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ItemDto create(@RequestHeader(ShareItHeaders.USER_ID) Long userId,
-                          @RequestBody @Validated(OnCreate.class) ItemDto itemDto) {
+    public ItemDto create(@RequestHeader(ShareItHeaders.USER_ID) Long userId, @RequestBody ItemDto itemDto) {
         log.info("POST /items, user id={}", userId);
         return itemService.create(userId, itemDto);
     }
@@ -44,7 +39,7 @@ public class ItemController {
     @PatchMapping("/{itemId}")
     public ItemDto update(@RequestHeader(ShareItHeaders.USER_ID) Long userId,
                           @PathVariable Long itemId,
-                          @RequestBody @Validated(OnUpdate.class) ItemDto itemDto) {
+                          @RequestBody ItemDto itemDto) {
         log.info("PATCH /items/{}, user id={}", itemId, userId);
         return itemService.update(userId, itemId, itemDto);
     }
@@ -73,7 +68,7 @@ public class ItemController {
     @ResponseStatus(HttpStatus.CREATED)
     public CommentDto addComment(@RequestHeader(ShareItHeaders.USER_ID) Long userId,
                                  @PathVariable Long itemId,
-                                 @RequestBody @Valid CommentDto commentDto) {
+                                 @RequestBody CommentDto commentDto) {
         log.info("POST /items/{}/comment, user id={}", itemId, userId);
         return itemService.addComment(userId, itemId, commentDto);
     }
