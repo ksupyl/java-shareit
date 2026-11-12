@@ -39,10 +39,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingDto create(Long bookerId, NewBookingDto bookingDto) {
-        // аннотация на поле видит только своё поле, поэтому порядок двух дат проверяем здесь
-        if (!bookingDto.getEnd().isAfter(bookingDto.getStart())) {
-            throw new ValidationException("Booking end must be after start");
-        }
+        // даты уже проверил gateway, здесь — только то, для чего нужна база
         User booker = getUserOrThrow(bookerId);
         Item item = itemRepository.findById(bookingDto.getItemId())
                 .orElseThrow(() -> new NotFoundException("Item with id=" + bookingDto.getItemId() + " not found"));
