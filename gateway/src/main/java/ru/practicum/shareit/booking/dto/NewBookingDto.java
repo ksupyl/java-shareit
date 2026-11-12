@@ -3,6 +3,7 @@ package ru.practicum.shareit.booking.dto;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,7 +22,9 @@ import java.time.LocalDateTime;
 @StartBeforeEnd
 public class NewBookingDto {
 
+    // id в базе начинаются с единицы, так что 0 и минус отсекаем здесь, не спрашивая сервер
     @NotNull
+    @Positive
     private Long itemId;
 
     @NotNull

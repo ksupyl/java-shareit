@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,6 +35,8 @@ public class ItemDto {
     @NotNull(groups = OnCreate.class)
     private Boolean available;
 
-    // id запроса, в ответ на который добавляют вещь; можно не присылать
+    // id запроса, в ответ на который добавляют вещь. Можно не присылать: @Positive пропускает null,
+    // а 0 и минус отсекает
+    @Positive(groups = OnCreate.class)
     private Long requestId;
 }

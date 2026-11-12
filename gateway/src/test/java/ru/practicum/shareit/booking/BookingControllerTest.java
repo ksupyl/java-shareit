@@ -63,6 +63,7 @@ class BookingControllerTest {
     static Stream<NewBookingDto> invalidBookings() {
         return Stream.of(
                 new NewBookingDto(null, NOW.plusDays(1), NOW.plusDays(2)),   // нет вещи
+                new NewBookingDto(0L, NOW.plusDays(1), NOW.plusDays(2)),     // id вещи — ноль
                 new NewBookingDto(10L, null, NOW.plusDays(2)),               // нет начала
                 new NewBookingDto(10L, NOW.plusDays(1), null),               // нет конца
                 new NewBookingDto(10L, NOW.minusDays(1), NOW.plusDays(2)),   // начало в прошлом

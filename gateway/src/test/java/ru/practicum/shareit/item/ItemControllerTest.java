@@ -73,6 +73,19 @@ class ItemControllerTest {
     }
 
     @Test
+    void shouldRejectNonPositiveRequestId() throws Exception {
+        ItemDto item = ItemDto.builder().name("Дрель").description("Ударная").available(true).requestId(0L).build();
+
+        mvc.perform(post("/items")
+                        .header(ShareItHeaders.USER_ID, 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(item)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("requestId: must be greater than 0"));
+        verifyNoInteractions(itemClient);
+    }
+
+    @Test
     void shouldRequireUserHeaderToCreateItem() throws Exception {
         mvc.perform(post("/items")
                         .contentType(MediaType.APPLICATION_JSON)
