@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.practicum.shareit.common.ShareItFormats;
 import ru.practicum.shareit.item.dto.ItemShortDto;
 
 import java.time.LocalDateTime;
@@ -22,9 +23,7 @@ public class ItemRequestDto {
     private Long id;
     private String description;
 
-    // До секунды, как даты брони. Без формата ответ на POST показал бы наносекунды из Java,
-    // а ответ на GET — микросекунды из базы, и одно и то же время выглядело бы по-разному.
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonFormat(pattern = ShareItFormats.DATE_TIME)
     private LocalDateTime created;
 
     private List<ItemShortDto> items;
