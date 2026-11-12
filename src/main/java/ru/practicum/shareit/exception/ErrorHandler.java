@@ -1,6 +1,7 @@
 package ru.practicum.shareit.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -33,13 +34,31 @@ public class ErrorHandler {
     @ExceptionHandler({
             MissingRequestHeaderException.class,
             MissingServletRequestParameterException.class,
-            MethodArgumentTypeMismatchException.class,
-            HttpMessageNotReadableException.class
+            ValidationException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadRequest(Exception e) {
         log.warn("400 Bad Request: {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
+    }
+
+    // Параметр не того типа: /items/abc или ?state=SOON. Текст Spring тут с именами Java-классов,
+    // поэтому отвечаем своим.
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        String message = "Invalid value '" + e.getValue() + "' for parameter '" + e.getName() + "'";
+        log.warn("400 Bad Request: {}", message);
+        return new ErrorResponse(message);
+    }
+
+    // Тело запроса не прочитать: его нет, JSON битый или в поле не тот тип, например дата "tomorrow".
+    // Текст Spring и Jackson тут с именами Java-классов и методов, поэтому он только в лог.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleNotReadable(HttpMessageNotReadableException e) {
+        log.warn("400 Bad Request: {}", e.getMessage());
+        return new ErrorResponse("Request body is missing or malformed");
     }
 
     @ExceptionHandler(ForbiddenException.class)
@@ -61,6 +80,15 @@ public class ErrorHandler {
     public ErrorResponse handleConflict(ConflictException e) {
         log.warn("409 Conflict: {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
+    }
+
+    // Запись нарушила ограничение базы. Например, два запроса с одним email пришли одновременно:
+    // проверку в сервисе прошли оба, а вторую вставку отклонил UNIQUE. Текст ошибки базы — только в лог.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        log.warn("409 Conflict: {}", e.getMostSpecificCause().getMessage());
+        return new ErrorResponse("Data conflicts with existing records");
     }
 
     // Сюда долетают только баги. Ловим RuntimeException, а не Exception: свои ошибки

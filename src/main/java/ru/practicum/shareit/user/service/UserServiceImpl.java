@@ -2,10 +2,11 @@ package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
@@ -16,12 +17,13 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final ItemRepository itemRepository;
 
     @Override
+    @Transactional
     public UserDto create(UserDto userDto) {
         checkEmailIsFree(userDto.getEmail());
         User user = userRepository.save(UserMapper.toUser(userDto));
@@ -30,6 +32,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserDto update(Long userId, UserDto userDto) {
         User user = getUserOrThrow(userId);
         String newEmail = userDto.getEmail();
@@ -50,16 +53,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getAll() {
-        return userRepository.findAll().stream()
+        return userRepository.findAll(Sort.by("id")).stream()
                 .map(UserMapper::toUserDto)
                 .toList();
     }
 
     @Override
+    @Transactional
     public void delete(Long userId) {
         User user = getUserOrThrow(userId);
-        itemRepository.deleteAllByOwnerId(user.getId());
-        userRepository.deleteById(user.getId());
+        // вещи, брони и отзывы пользователя база удалит сама — ON DELETE CASCADE в schema.sql
+        userRepository.delete(user);
         log.info("Deleted user id={} and their items", userId);
     }
 
@@ -69,7 +73,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private void checkEmailIsFree(String email) {
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new ConflictException("Email " + email + " is already in use");
         }
     }

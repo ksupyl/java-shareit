@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,10 +21,12 @@ public class ItemDto {
 
     @NotBlank(groups = OnCreate.class)
     @NullOrNotBlank(groups = OnUpdate.class)
+    @Size(max = 255, groups = {OnCreate.class, OnUpdate.class})
     private String name;
 
     @NotBlank(groups = OnCreate.class)
     @NullOrNotBlank(groups = OnUpdate.class)
+    @Size(max = 1000, groups = {OnCreate.class, OnUpdate.class})
     private String description;
 
     // Boolean, а не boolean: "не прислали" станет null, и его поймает @NotNull
