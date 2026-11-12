@@ -55,6 +55,18 @@ class UserServiceImplIntegrationTest {
     }
 
     @Test
+    void shouldFindUserById() {
+        User saved = User.builder().name("Ksenia").email("ksenia@mail.ru").build();
+        em.persist(saved);
+
+        UserDto found = userService.getById(saved.getId());
+
+        assertThat(found.getId()).isEqualTo(saved.getId());
+        assertThat(found.getName()).isEqualTo("Ksenia");
+        assertThat(found.getEmail()).isEqualTo("ksenia@mail.ru");
+    }
+
+    @Test
     void shouldReturnAllUsers() {
         UserDto first = userService.create(UserDto.builder().name("Ksenia").email("ksenia@mail.ru").build());
         UserDto second = userService.create(UserDto.builder().name("Owner").email("owner@mail.ru").build());

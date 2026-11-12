@@ -11,6 +11,7 @@ import ru.practicum.shareit.booking.dto.BookingState;
 import ru.practicum.shareit.booking.dto.NewBookingDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Transactional
 @SpringBootTest
@@ -43,6 +45,26 @@ class BookingServiceImplIntegrationTest {
         assertThat(saved.getStatus()).isEqualTo(BookingStatus.APPROVED);
         assertThat(saved.getStart()).isEqualTo(start);
         assertThat(saved.getBooker().getId()).isEqualTo(booker.getId());
+    }
+
+    @Test
+    void shouldShowBookingOnlyToBookerAndItemOwner() {
+        User owner = persistUser("Owner", "owner@mail.ru");
+        User booker = persistUser("Booker", "booker@mail.ru");
+        User stranger = persistUser("Stranger", "stranger@mail.ru");
+        LocalDateTime now = LocalDateTime.now();
+        Booking booking = persistBooking(persistItem(owner), booker, now.plusDays(1), now.plusDays(2),
+                BookingStatus.WAITING);
+
+        BookingDto result = bookingService.getById(booker.getId(), booking.getId());
+
+        assertThat(result.getStatus()).isEqualTo(BookingStatus.WAITING);
+        assertThat(result.getBooker().getName()).isEqualTo("Booker");
+        assertThat(result.getItem().getName()).isEqualTo("Дрель");
+        // владелец вещи видит ту же бронь, а посторонний — нет
+        assertThat(bookingService.getById(owner.getId(), booking.getId())).isEqualTo(result);
+        assertThatThrownBy(() -> bookingService.getById(stranger.getId(), booking.getId()))
+                .isInstanceOf(ForbiddenException.class);
     }
 
     @Test

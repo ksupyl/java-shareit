@@ -80,6 +80,24 @@ class ItemServiceImplIntegrationTest {
     }
 
     @Test
+    void shouldUpdateOnlyGivenFieldsInDatabase() {
+        User owner = persistUser("Owner", "owner@mail.ru");
+        Item drill = persistItem(owner, "Дрель", true);
+
+        itemService.update(owner.getId(), drill.getId(),
+                ItemDto.builder().name("Дрель ударная").available(false).build());
+        // отправляем изменения в базу и забываем закешированные сущности, чтобы читать из базы
+        em.flush();
+        em.clear();
+
+        Item saved = em.find(Item.class, drill.getId());
+        assertThat(saved.getName()).isEqualTo("Дрель ударная");
+        assertThat(saved.isAvailable()).isFalse();
+        // описание не присылали — оно осталось прежним
+        assertThat(saved.getDescription()).isEqualTo("Дрель в хорошем состоянии");
+    }
+
+    @Test
     void shouldShowItemWithoutBookingsToOtherUser() {
         User owner = persistUser("Owner", "owner@mail.ru");
         User booker = persistUser("Booker", "booker@mail.ru");
